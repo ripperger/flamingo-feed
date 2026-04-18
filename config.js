@@ -39,6 +39,15 @@ const CONFIG = {
   // "source"  = grouped by source
   newsSortOrder: "recency",
 
+  // ── Title blocklist ───────────────────────────────────
+  // Articles whose title contains any of these strings (case-insensitive)
+  // will be silently skipped. Applies to news only, not YouTube.
+  titleBlocklist: [
+    // "war",
+    // "earthquake",
+    // "celebrity name",
+  ],
+
 
   // ── News RSS feeds ────────────────────────────────────
   // Find RSS URLs: https://www.rsslookup.com

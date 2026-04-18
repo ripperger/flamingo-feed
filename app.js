@@ -148,6 +148,12 @@ function isTooOld(raw = "") {
   return (Date.now() - d) / 3_600_000 > CONFIG.maxArticleAgeHours;
 }
 
+function isTitleBlocked(title = "") {
+  if (!CONFIG.titleBlocklist || !CONFIG.titleBlocklist.length) return false;
+  const lower = title.toLowerCase();
+  return CONFIG.titleBlocklist.some(term => lower.includes(term.toLowerCase()));
+}
+
 // ── Fetch one news feed (RSS 2.0 or Atom) ───────────────
 async function fetchNewsFeed(feed) {
   const doc = await fetchXML(feed.url);
@@ -157,12 +163,13 @@ async function fetchNewsFeed(feed) {
   const rssItems = [...doc.querySelectorAll("item")];
   if (rssItems.length) {
     rssItems.slice(0, CONFIG.maxNewsPerFeed).forEach(el => {
-      const date = el.querySelector("pubDate")?.textContent || "";
-      if (isTooOld(date)) return;
+      const date  = el.querySelector("pubDate")?.textContent || "";
+      const title = stripTags(el.querySelector("title")?.textContent || "");
+      if (isTooOld(date) || isTitleBlocked(title)) return;
       const link = el.querySelector("link")?.textContent?.trim()
                 || el.querySelector("link")?.getAttribute("href") || "";
       items.push({
-        title:  stripTags(el.querySelector("title")?.textContent || ""),
+        title,
         link,
         desc:   el.querySelector("description")?.textContent || "",
         date,
@@ -176,13 +183,14 @@ async function fetchNewsFeed(feed) {
   // Atom
   const entries = [...doc.querySelectorAll("entry")];
   entries.slice(0, CONFIG.maxNewsPerFeed).forEach(el => {
-    const date = el.querySelector("updated")?.textContent
-              || el.querySelector("published")?.textContent || "";
-    if (isTooOld(date)) return;
+    const date  = el.querySelector("updated")?.textContent
+               || el.querySelector("published")?.textContent || "";
+    const title = stripTags(el.querySelector("title")?.textContent || "");
+    if (isTooOld(date) || isTitleBlocked(title)) return;
     const link = el.querySelector("link[rel='alternate']")?.getAttribute("href")
               || el.querySelector("link")?.getAttribute("href") || "";
     items.push({
-      title:  stripTags(el.querySelector("title")?.textContent || ""),
+      title,
       link,
       desc:   el.querySelector("summary")?.textContent
            || el.querySelector("content")?.textContent || "",
@@ -303,8 +311,7 @@ async function loadFeeds() {
 //  TIMER + OVERLAY
 // ═══════════════════════════════════════════════════════
 
-let timerHandle  = null;
-let unlockCode   = "";
+let timerHandle = null;
 
 function startTimer(seconds = CONFIG.timerSeconds) {
   let remaining = seconds;
@@ -325,33 +332,12 @@ function startTimer(seconds = CONFIG.timerSeconds) {
 }
 
 function showOverlay() {
-  unlockCode = generateCode(12);
-  $("overlay-code").textContent = unlockCode;
-  $("overlay-input").value = "";
-  $("overlay-input").className = "";
   $("overlay").classList.add("visible");
-  setTimeout(() => $("overlay-input").focus(), 100);
 }
 
-function generateCode(len = 12) {
-  const pool = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  return Array.from({ length: len }, () =>
-    pool[Math.floor(Math.random() * pool.length)]
-  ).join("");
-}
-
-$("overlay-input").addEventListener("input", function () {
-  const val = this.value.toUpperCase();
-  this.value = val;
-  if (val === unlockCode) {
-    this.classList.add("matched");
-    setTimeout(() => {
-      $("overlay").classList.remove("visible");
-      this.classList.remove("matched");
-      this.value = "";
-      startTimer(); // reset to full 10 minutes
-    }, 300);
-  }
+$("overlay-close").addEventListener("click", () => {
+  $("overlay").classList.remove("visible");
+  startTimer();
 });
 
 // ═══════════════════════════════════════════════════════
