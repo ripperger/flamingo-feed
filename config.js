@@ -43,6 +43,7 @@ const CONFIG = {
   // Articles whose title contains any of these strings (case-insensitive)
   // will be silently skipped. Applies to news only, not YouTube.
   titleBlocklist: [
+    "Nagy Feró",
     // "war",
     // "earthquake",
     // "celebrity name",
