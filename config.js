@@ -25,14 +25,14 @@ const CONFIG = {
   // Uses localStorage — resets at midnight.
   dailyLimit: {
     enabled: true,
-    maxUnlocks: 5,
+    maxUnlocks: 10,
   },
 
 
   // ── Content filters ───────────────────────────────────
-  maxDescChars:         220,    // truncate article descriptions
+  maxDescChars:         300,    // truncate article descriptions
   maxArticleAgeHours:    24,    // hide articles older than this (0 = disabled)
-  maxNewsPerFeed:         5,    // max items per news source
+  maxNewsPerFeed:         4,    // max items per news source
   maxYoutubePerChannel:   2,    // max videos per channel
 
   // "recency" = newest first across all sources
@@ -47,6 +47,20 @@ const CONFIG = {
     "Bayer Zsolt",
     "Rákay Philip",
     "Tóth Gabi",
+    "Gáspár Győző",
+    "Győzike",
+    "Molnár Áron",
+    "Lengyel Tamás",
+    "Borbás Marcsi",
+    "Curtis",
+    "Dopeman",
+    "Lázárinfó",
+    "Megafon",
+    "celeb",
+    "borzasztó",    
+    "szörnyethalt",
+    "pusztító",
+    "vészjósló",
     // "war",
     // "earthquake",
     // "celebrity name",
@@ -58,7 +72,7 @@ const CONFIG = {
   newsFeeds: [
     { label: "BBC World",  url: "https://feeds.bbci.co.uk/news/world/rss.xml" },
     { label: "Reuters",    url: "https://news.google.com/rss/search?q=site:reuters.com&hl=en-US&gl=US&ceid=US:en" },
-    { label: "Index",   url: "https://index.hu/24ora/rss/" },
+    // { label: "Index",   url: "https://index.hu/24ora/rss/" },
     { label: "Telex",   url: "https://telex.hu/rss" },
     { label: "HVG",   url: "https://hvg.hu/rss" },
     { label: "DW",   url: "https://rss.dw.com/atom/rss-en-top" },
@@ -82,12 +96,13 @@ const CONFIG = {
     { label: "Partizán", channelId: "UCEFpEvuosfPGlV1VyUF6QOA" },
     { label: "ATV Magyarország", channelId: "UCXxUjsYxbL1llIe9Ra6wcyQ" },
     { label: "The Economist", channelId: "UC0p5jTq6Xx_DosDFxVXnWaQ" },
-    { label: "Friderikusz Podcast", channelId: "UCQAeX1_gw45xb3Cg-OwEFcw" },
+    // { label: "Friderikusz Podcast", channelId: "UCQAeX1_gw45xb3Cg-OwEFcw" },
     { label: "Netflix", channelId: "UCWOA1ZGywLbqmigxE4Qlvuw" },
-    { label: "TED", channelId: "UCAuUUnT6oDeKwE6v1NGQxug" },
+    // { label: "TED", channelId: "UCAuUUnT6oDeKwE6v1NGQxug" },
     { label: "Big Think", channelId: "UCvQECJukTDE2i6aCoMnS-Vg" },
-    { label: "DW Documentary", channelId: "UCW39zufHfsuGgpLviKh297Q" },
+    // { label: "DW Documentary", channelId: "UCW39zufHfsuGgpLviKh297Q" },
     { label: "TED Ed", channelId: "UCsooa4yRKGN_zEE8iknghZA" },
+    { label: "Magyar Péter", channelId: "UCDHjSN4vbfmzb8Cdfsob9Gg" },
     // { label: "My Channel", channelId: "UC..." },
   ],
 
