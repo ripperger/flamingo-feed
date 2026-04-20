@@ -111,7 +111,7 @@ $("gate-input").addEventListener("change", () => handleGateSubmit());
 // ═══════════════════════════════════════════════════════
 
 async function fetchXML(url) {
-  const res = await fetch(proxy(url), { signal: AbortSignal.timeout(10000) });
+  const res = await fetch(proxy(url), { signal: AbortSignal.timeout(30000) });
   const text = await res.text();
   return new DOMParser().parseFromString(text, "text/xml");
 }
