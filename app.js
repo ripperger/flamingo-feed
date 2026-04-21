@@ -2,13 +2,8 @@
 //  MORNING FEED — APP
 // ═══════════════════════════════════════════════════════
 
-// ── CORS proxy ──────────────────────────────────────────
 const proxy = url => `https://corsproxy.io/?${encodeURIComponent(url)}`;
-
-// ── DOM helpers ─────────────────────────────────────────
-const $ = id => document.getElementById(id);
-
-// ── localStorage keys ───────────────────────────────────
+const $     = id  => document.getElementById(id);
 const LS_KEY = "morning_feed_daily";
 
 // ═══════════════════════════════════════════════════════
@@ -16,7 +11,7 @@ const LS_KEY = "morning_feed_daily";
 // ═══════════════════════════════════════════════════════
 
 function getToday() {
-  return new Date().toISOString().slice(0, 10); // "YYYY-MM-DD"
+  return new Date().toISOString().slice(0, 10);
 }
 
 function getDailyRecord() {
@@ -41,7 +36,6 @@ function isWithinTimeWindow() {
 }
 
 function checkAccessBlocked() {
-  // Time window check
   if (CONFIG.timeWindow.enabled && !isWithinTimeWindow()) {
     const start = String(CONFIG.timeWindow.startHour).padStart(2, "0") + ":00";
     const end   = String(CONFIG.timeWindow.endHour).padStart(2, "0")   + ":00";
@@ -53,8 +47,7 @@ function checkAccessBlocked() {
 
 function checkDailyLimitReached() {
   if (!CONFIG.dailyLimit.enabled) return false;
-  const rec = getDailyRecord();
-  return rec.unlocks >= CONFIG.dailyLimit.maxUnlocks;
+  return getDailyRecord().unlocks >= CONFIG.dailyLimit.maxUnlocks;
 }
 
 // ═══════════════════════════════════════════════════════
@@ -62,6 +55,8 @@ function checkDailyLimitReached() {
 // ═══════════════════════════════════════════════════════
 
 function showGateMessage(icon, text) {
+  // Guard: don't append a second message if one already exists
+  if ($("gate-message")) return;
   $("gate-input").style.display = "none";
   $("gate-error").style.display = "none";
   const msg = document.createElement("div");
@@ -70,7 +65,21 @@ function showGateMessage(icon, text) {
   $("gate").appendChild(msg);
 }
 
+// ── Pre-fetch: kick off news fetch on first keystroke ──
+let prefetchPromise = null;
+
+$("gate-input").addEventListener("input", () => {
+  if (!prefetchPromise) {
+    prefetchPromise = Promise.allSettled(CONFIG.newsFeeds.map(fetchNewsFeed));
+  }
+});
+
+// ── Submission guard — prevents double-fire on mobile ──
+let gateSubmitted = false;
+
 function handleGateSubmit() {
+  if (gateSubmitted) return;
+
   const input = $("gate-input");
   if (input.value !== CONFIG.password) {
     $("gate-error").textContent = "incorrect";
@@ -79,16 +88,15 @@ function handleGateSubmit() {
     return;
   }
 
-  // Correct password — check daily limit
   if (checkDailyLimitReached()) {
+    gateSubmitted = true;
     showGateMessage("🚫", `Daily limit reached\n(${CONFIG.dailyLimit.maxUnlocks} unlocks)`);
     return;
   }
 
-  // Count this unlock
+  gateSubmitted = true;
   incrementUnlocks();
 
-  // Enter feed
   $("gate").style.display = "none";
   $("feed").style.display = "block";
   $("header-date").textContent = new Date().toLocaleDateString("en-GB", {
@@ -103,7 +111,6 @@ $("gate-input").addEventListener("keydown", e => {
   if (e.key === "Enter") handleGateSubmit();
 });
 
-// Mobile keyboards sometimes fire "change" without "keydown Enter"
 $("gate-input").addEventListener("change", () => handleGateSubmit());
 
 // ═══════════════════════════════════════════════════════
@@ -111,7 +118,8 @@ $("gate-input").addEventListener("change", () => handleGateSubmit());
 // ═══════════════════════════════════════════════════════
 
 async function fetchXML(url) {
-  const res = await fetch(proxy(url), { signal: AbortSignal.timeout(30000) });
+  const ms  = CONFIG.fetchTimeoutMs || 10000;
+  const res = await fetch(proxy(url), { signal: AbortSignal.timeout(ms) });
   const text = await res.text();
   return new DOMParser().parseFromString(text, "text/xml");
 }
@@ -154,9 +162,34 @@ function isTitleBlocked(title = "") {
   return CONFIG.titleBlocklist.some(term => lower.includes(term.toLowerCase()));
 }
 
-// ── Fetch one news feed (RSS 2.0 or Atom) ───────────────
+// ── Extract thumbnail URL from an RSS <item> element ──
+function extractThumbnail(el) {
+  const mediaNS = "http://search.yahoo.com/mrss/";
+
+  // media:thumbnail (most common)
+  const mt = el.getElementsByTagNameNS(mediaNS, "thumbnail")[0];
+  if (mt?.getAttribute("url")) return mt.getAttribute("url");
+
+  // media:content with medium="image"
+  const mc = [...el.getElementsByTagNameNS(mediaNS, "content")]
+    .find(n => n.getAttribute("medium") === "image" || n.getAttribute("type")?.startsWith("image"));
+  if (mc?.getAttribute("url")) return mc.getAttribute("url");
+
+  // <enclosure type="image/...">
+  const enc = el.querySelector("enclosure");
+  if (enc?.getAttribute("type")?.startsWith("image")) return enc.getAttribute("url");
+
+  // og:image inside description CDATA (some feeds embed it)
+  const desc = el.querySelector("description")?.textContent || "";
+  const ogMatch = desc.match(/<img[^>]+src=["']([^"']+)["']/i);
+  if (ogMatch) return ogMatch[1];
+
+  return null;
+}
+
+// ── Fetch one news feed (RSS 2.0 or Atom) ──────────────
 async function fetchNewsFeed(feed) {
-  const doc = await fetchXML(feed.url);
+  const doc   = await fetchXML(feed.url);
   const items = [];
 
   // RSS 2.0
@@ -171,10 +204,11 @@ async function fetchNewsFeed(feed) {
       items.push({
         title,
         link,
-        desc:   el.querySelector("description")?.textContent || "",
+        desc:      el.querySelector("description")?.textContent || "",
         date,
-        dateMs: new Date(date).getTime() || 0,
-        source: feed.label,
+        dateMs:    new Date(date).getTime() || 0,
+        source:    feed.label,
+        thumbnail: extractThumbnail(el),
       });
     });
     return items;
@@ -192,20 +226,21 @@ async function fetchNewsFeed(feed) {
     items.push({
       title,
       link,
-      desc:   el.querySelector("summary")?.textContent
-           || el.querySelector("content")?.textContent || "",
+      desc:      el.querySelector("summary")?.textContent
+              || el.querySelector("content")?.textContent || "",
       date,
-      dateMs: new Date(date).getTime() || 0,
-      source: feed.label,
+      dateMs:    new Date(date).getTime() || 0,
+      source:    feed.label,
+      thumbnail: extractThumbnail(el),
     });
   });
   return items;
 }
 
-// ── Fetch one YouTube channel feed ──────────────────────
+// ── Fetch one YouTube channel feed ─────────────────────
 async function fetchYoutubeFeed(feed) {
-  const url = `https://www.youtube.com/feeds/videos.xml?channel_id=${feed.channelId}`;
-  const doc  = await fetchXML(url);
+  const url     = `https://www.youtube.com/feeds/videos.xml?channel_id=${feed.channelId}`;
+  const doc     = await fetchXML(url);
   const entries = [...doc.querySelectorAll("entry")];
   const items   = [];
   const ytNS    = "http://www.youtube.com/xml/schemas/2015";
@@ -215,8 +250,8 @@ async function fetchYoutubeFeed(feed) {
     let videoId = el.getElementsByTagNameNS(ytNS, "videoId")[0]?.textContent || "";
     if (!videoId) {
       const href = el.querySelector("link")?.getAttribute("href") || "";
-      const m = href.match(/[?&]v=([^&]+)/);
-      videoId = m ? m[1] : "";
+      const m    = href.match(/[?&]v=([^&]+)/);
+      videoId    = m ? m[1] : "";
     }
     const date = el.querySelector("published")?.textContent || "";
     const desc = el.getElementsByTagNameNS(mrssNS, "description")[0]?.textContent
@@ -227,6 +262,7 @@ async function fetchYoutubeFeed(feed) {
       desc,
       channel: feed.label,
       date,
+      dateMs:  new Date(date).getTime() || 0,
     });
   });
   return items;
@@ -237,7 +273,6 @@ async function fetchYoutubeFeed(feed) {
 // ═══════════════════════════════════════════════════════
 
 function renderNews(items) {
-  // Sort
   if (CONFIG.newsSortOrder === "recency") {
     items.sort((a, b) => b.dateMs - a.dateMs);
   }
@@ -251,17 +286,23 @@ function renderNews(items) {
 
   $("news-container").innerHTML = items.map(item => `
     <div class="news-item">
-      <div class="news-meta">
-        <span class="news-source">${item.source}</span>
-        ${item.date ? `<span class="meta-dot"></span><span class="news-date">${fmtDate(item.date)}</span>` : ""}
+      ${item.thumbnail ? `<img class="news-thumb" src="${item.thumbnail}" alt="" loading="lazy">` : ""}
+      <div class="news-body">
+        <div class="news-meta">
+          <span class="news-source">${item.source}</span>
+          ${item.date ? `<span class="meta-dot"></span><span class="news-date">${fmtDate(item.date)}</span>` : ""}
+        </div>
+        <a class="news-title" href="${item.link}" target="_blank" rel="noopener noreferrer">${item.title}</a>
+        ${item.desc ? `<div class="news-desc">${truncate(item.desc, CONFIG.maxDescChars)}</div>` : ""}
       </div>
-      <a class="news-title" href="${item.link}" target="_blank" rel="noopener noreferrer">${item.title}</a>
-      ${item.desc ? `<div class="news-desc">${truncate(item.desc, CONFIG.maxDescChars)}</div>` : ""}
     </div>
   `).join("");
 }
 
 function renderYoutube(items) {
+  // Always sort by recency
+  items.sort((a, b) => b.dateMs - a.dateMs);
+
   $("yt-count").textContent = `${items.length} videos`;
 
   if (!items.length) {
@@ -289,18 +330,20 @@ function renderYoutube(items) {
   `).join("");
 }
 
-// ── Load all feeds in parallel ───────────────────────────
+// ── Load feeds: news first, YouTube after ──────────────
 async function loadFeeds() {
-  const [newsResults, ytResults] = await Promise.all([
-    Promise.allSettled(CONFIG.newsFeeds.map(fetchNewsFeed)),
-    Promise.allSettled(CONFIG.youtubeFeeds.map(fetchYoutubeFeed)),
-  ]);
+  // Use pre-fetched news promise if available, otherwise fetch now
+  const newsPromise = prefetchPromise
+    || Promise.allSettled(CONFIG.newsFeeds.map(fetchNewsFeed));
 
+  const newsResults = await newsPromise;
   const allNews = newsResults
     .filter(r => r.status === "fulfilled")
     .flatMap(r => r.value);
   renderNews(allNews);
 
+  // YouTube fetches after news is rendered
+  const ytResults = await Promise.allSettled(CONFIG.youtubeFeeds.map(fetchYoutubeFeed));
   const allYt = ytResults
     .filter(r => r.status === "fulfilled")
     .flatMap(r => r.value);
@@ -335,16 +378,10 @@ function showOverlay() {
   $("overlay").classList.add("visible");
 }
 
-$("overlay-close").addEventListener("click", () => {
-  $("overlay").classList.remove("visible");
-  startTimer();
-});
-
 // ═══════════════════════════════════════════════════════
 //  INIT
 // ═══════════════════════════════════════════════════════
 
-// Run access check on page load — before the gate is even visible
 if (checkAccessBlocked()) {
-  // Gate is already showing the message; nothing else to do.
+  // Time window message shown; nothing else to do.
 }

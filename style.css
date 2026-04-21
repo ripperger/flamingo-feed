@@ -220,8 +220,26 @@ html, body {
   padding: 15px 16px;
   border-bottom: 1px solid var(--border);
   transition: background 0.15s;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
 }
 .news-item:active { background: var(--bg2); }
+
+.news-thumb {
+  width: 80px;
+  height: 54px;
+  object-fit: cover;
+  border-radius: 3px;
+  flex-shrink: 0;
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+}
+
+.news-body {
+  flex: 1;
+  min-width: 0;
+}
 
 .news-meta {
   display: flex;
@@ -250,7 +268,7 @@ html, body {
 
 .news-title {
   font-family: var(--sans);
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 500;
   color: var(--bright);
   line-height: 1.5;
@@ -262,9 +280,9 @@ html, body {
 
 .news-desc {
   font-family: var(--sans);
-  font-size: 13px;
+  font-size: 14px;
   color: var(--text-desc);
-  line-height: 1.7;
+  line-height: 1.75;
   font-weight: 300;
 }
 
@@ -298,7 +316,7 @@ html, body {
 
 .yt-title {
   font-family: var(--sans);
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 500;
   color: var(--bright);
   line-height: 1.5;
@@ -320,9 +338,9 @@ html, body {
 
 .yt-desc {
   font-family: var(--sans);
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text-desc);
-  line-height: 1.7;
+  line-height: 1.75;
   margin-top: 10px;
   font-weight: 300;
 }
@@ -351,27 +369,20 @@ html, body {
 #overlay.visible { display: flex; }
 
 .overlay-label {
-  font-size: 11px;
-  color: var(--text-dim);
-  letter-spacing: 6px;
+  font-size: 13px;
+  color: var(--text-mid);
+  letter-spacing: 8px;
   text-transform: uppercase;
+  font-weight: 500;
 }
 
-#overlay-close {
-  margin-top: 8px;
-  background: transparent;
-  border: 1px solid var(--border2);
-  color: var(--text-mid);
-  font-family: var(--mono);
-  font-size: 10px;
+.overlay-sub {
+  font-size: 9px;
+  color: var(--text-dim);
   letter-spacing: 3px;
   text-transform: uppercase;
-  padding: 11px 24px;
-  border-radius: 3px;
-  cursor: pointer;
-  transition: border-color 0.2s, color 0.2s;
+  margin-top: 4px;
 }
-#overlay-close:hover { border-color: var(--accent); color: var(--bright); }
 
 
 /* ────────────────────────────────────────────
