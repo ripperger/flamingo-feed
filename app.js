@@ -65,14 +65,8 @@ function showGateMessage(icon, text) {
   $("gate").appendChild(msg);
 }
 
-// ── Pre-fetch: kick off news fetch on first keystroke ──
-let prefetchPromise = null;
-
-$("gate-input").addEventListener("input", () => {
-  if (!prefetchPromise) {
-    prefetchPromise = Promise.allSettled(CONFIG.newsFeeds.map(fetchNewsFeed));
-  }
-});
+// ── Pre-fetch: start loading news immediately on page load ──
+let prefetchPromise = Promise.allSettled(CONFIG.newsFeeds.map(fetchNewsFeed));
 
 // ── Submission guard — prevents double-fire on mobile ──
 let gateSubmitted = false;
@@ -286,15 +280,16 @@ function renderNews(items) {
 
   $("news-container").innerHTML = items.map(item => `
     <div class="news-item">
-      ${item.thumbnail ? `<img class="news-thumb" src="${item.thumbnail}" alt="" loading="lazy">` : ""}
-      <div class="news-body">
-        <div class="news-meta">
-          <span class="news-source">${item.source}</span>
-          ${item.date ? `<span class="meta-dot"></span><span class="news-date">${fmtDate(item.date)}</span>` : ""}
-        </div>
-        <a class="news-title" href="${item.link}" target="_blank" rel="noopener noreferrer">${item.title}</a>
-        ${item.desc ? `<div class="news-desc">${truncate(item.desc, CONFIG.maxDescChars)}</div>` : ""}
+      <div class="news-meta">
+        <span class="news-source">${item.source}</span>
+        ${item.date ? `<span class="meta-dot"></span><span class="news-date">${fmtDate(item.date)}</span>` : ""}
       </div>
+      <a class="news-title" href="${item.link}" target="_blank" rel="noopener noreferrer">${item.title}</a>
+      ${item.desc || item.thumbnail ? `
+        <div class="news-lower">
+          ${item.thumbnail ? `<img class="news-thumb" src="${item.thumbnail}" alt="" loading="lazy">` : ""}
+          ${item.desc ? `<div class="news-desc">${truncate(item.desc, CONFIG.maxDescChars)}</div>` : ""}
+        </div>` : ""}
     </div>
   `).join("");
 }
