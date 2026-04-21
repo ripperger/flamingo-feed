@@ -12,20 +12,23 @@ const CONFIG = {
   // ── Timer ─────────────────────────────────────────────
   timerSeconds: 600,            // 10 minutes = 600
 
+  // ── Network ───────────────────────────────────────────
+  fetchTimeoutMs: 30000,        // abort a feed fetch after this many ms
+
 
   // ── Access control ────────────────────────────────────
   // Option A: Only allow access within a time window (24h format)
   timeWindow: {
     enabled: true,
     startHour: 8,               // e.g. 6 = 6:00 AM
-    endHour:   22,              // e.g. 10 = 10:00 AM
+    endHour:   21,              // e.g. 10 = 10:00 AM
   },
 
   // Option B: Limit how many times the feed can be unlocked per day
   // Uses localStorage — resets at midnight.
   dailyLimit: {
     enabled: true,
-    maxUnlocks: 10,
+    maxUnlocks: 8,
   },
 
 
