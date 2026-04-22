@@ -13,7 +13,7 @@ const CONFIG = {
   timerSeconds: 600,            // 10 minutes = 600
 
   // ── Network ───────────────────────────────────────────
-  fetchTimeoutMs: 30000,        // abort a feed fetch after this many ms
+  fetchTimeoutMs: 40000,        // abort a feed fetch after this many ms
 
 
   // ── Access control ────────────────────────────────────
