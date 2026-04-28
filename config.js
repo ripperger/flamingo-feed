@@ -28,7 +28,7 @@ const CONFIG = {
   // Uses localStorage — resets at midnight.
   dailyLimit: {
     enabled: true,
-    maxUnlocks: 8,
+    maxUnlocks: 6,
   },
 
 
