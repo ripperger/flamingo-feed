@@ -79,12 +79,12 @@ const CONFIG = {
   // Find RSS URLs: https://www.rsslookup.com
   newsFeeds: [
     { label: "BBC World",  url: "https://feeds.bbci.co.uk/news/world/rss.xml" },
-    { label: "Reuters",    url: "https://news.google.com/rss/search?q=site:reuters.com&hl=en-US&gl=US&ceid=US:en" },
+    // { label: "Reuters",    url: "https://news.google.com/rss/search?q=site:reuters.com&hl=en-US&gl=US&ceid=US:en" },
     // { label: "Index",   url: "https://index.hu/24ora/rss/" },
     { label: "Telex",   url: "https://telex.hu/rss" },
     { label: "HVG",   url: "https://hvg.hu/rss" },
     { label: "DW",   url: "https://rss.dw.com/atom/rss-en-top" },
-    { label: "The Week",   url: "https://theweek.com/uk/feeds.xml" },
+    // { label: "The Week",   url: "https://theweek.com/uk/feeds.xml" },
     { label: "YES!",   url: "https://www.yesmagazine.org/feed" },
     // { label: "Portfolio",   url: "https://www.portfolio.hu/rss/all.xml" },
     { label: "EUobserver",   url: "https://euobserver.com/feed/" },
@@ -111,7 +111,7 @@ const CONFIG = {
     // { label: "DW Documentary", channelId: "UCW39zufHfsuGgpLviKh297Q" },
     // { label: "TED Ed", channelId: "UCsooa4yRKGN_zEE8iknghZA" },
     { label: "Magyar Péter", channelId: "UCDHjSN4vbfmzb8Cdfsob9Gg" },
-    // { label: "My Channel", channelId: "UC..." },
+    { label: "TISZA", channelId: "UCdGCcuu66SuqaDQoSuh5wyA" },
   ],
 
 };
